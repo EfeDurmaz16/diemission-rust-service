@@ -1,0 +1,21 @@
+# Local environment files (copy from the matching .env.example)
+.env
+**/.env
+
+# Local toolchain downloads
+.tools/
+
+# Dependencies and build output
+node_modules/
+**/node_modules/
+**/target/
+dist/
+
+# Generated reports
+*.pdf
+
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
