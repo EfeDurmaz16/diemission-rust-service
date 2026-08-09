@@ -1,6 +1,15 @@
 import * as React from 'react';
 import { Box, ListItemIcon, ListItemText, MenuItem, Paper, Typography } from '@mui/material';
-import { Block, CheckCircle, Edit, Email, Key, LockReset, Visibility } from '@mui/icons-material';
+import {
+  Block,
+  CheckCircle,
+  Download,
+  Edit,
+  Email,
+  Key,
+  LockReset,
+  Visibility
+} from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
@@ -13,6 +22,7 @@ import { getErrorMsg } from '@/utils/helpers/get-error-message';
 import { UserAccountBasicDataProps, UserAccountBasicProps } from './user-account-basic-type';
 import { useHandleMenuAction } from '../../hooks';
 import { menuItemTexts } from '@/constants';
+import { getStudentReportUrl } from '@/utils/helpers/student-report';
 
 type State = {
   isSaving: boolean;
@@ -149,6 +159,27 @@ export const UserAccountBasic = ({ data }: { data: UserAccountBasicDataProps }) 
           <ListItemText>Edit</ListItemText>
         </MenuItem>
       ];
+
+      if (userType === 'student') {
+        // Plain link to the Rust report service, so the browser handles the
+        // download from the Content-Disposition header.
+        staticAction.push(
+          <MenuItem
+            key={2}
+            onClick={() => closeMenu()}
+            component='a'
+            href={getStudentReportUrl(id)}
+            target='_blank'
+            rel='noopener'
+          >
+            <ListItemIcon>
+              <Download fontSize='small' />
+            </ListItemIcon>
+            <ListItemText>Download PDF Report</ListItemText>
+          </MenuItem>
+        );
+      }
+
       return [
         ...staticAction,
         menuActions.map(({ action, icon, text }) => (

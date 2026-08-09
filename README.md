@@ -5,13 +5,15 @@ The original stack (React frontend, Express backend, PostgreSQL) plus `rust-serv
 ## Architecture
 
 ```
-frontend/ (React + Vite, :5173)
-      |
-      v
-backend/ (Express + PostgreSQL, :5007)  <----  rust-service/ (Axum, :8080)
-      |                                        fetches student JSON over HTTP,
-      v                                        renders the PDF, no DB access
- PostgreSQL (school_mgmt)
+              frontend/ (React + Vite, :5173)
+                 |                      |
+   REST + JWT cookies            "Download PDF Report"
+                 |                      |
+                 v                      v
+     backend/ (Express, :5007)  <--  rust-service/ (Axum, :8080)
+                 |                   fetches student JSON over HTTP,
+                 v                   renders the PDF, no DB access
+        PostgreSQL (school_mgmt)
 ```
 
 `rust-service` has no database credentials and no database driver. It authenticates against the Node API like any other client and reads `GET /api/v1/students/:id`.
@@ -68,7 +70,13 @@ returns 403, because the seed grants those permissions to the admin role only.
 
 ## Generate a PDF report
 
-With all three services running:
+From the UI, signed in as the admin: **Students**, then either the
+`Download PDF Report` row action in the list, or the button on a student's
+detail page. Both are plain links to the Rust service, so the browser follows
+the `Content-Disposition` header and saves the file. `VITE_REPORT_SERVICE_URL`
+in `frontend/.env` points at that service.
+
+Or from the command line, with all three services running:
 
 ```bash
 curl -f -o student-2-report.pdf http://localhost:8080/api/v1/students/2/report && file student-2-report.pdf
