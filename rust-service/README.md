@@ -30,17 +30,17 @@ The student endpoints sit behind JWT auth and CSRF protection, so the service ke
 1. On the first report request it logs in with `NODE_API_USERNAME` / `NODE_API_PASSWORD` via `POST /api/v1/auth/login`.
 2. The login cookies are marked `Secure`, which a cookie jar drops over plain `http://localhost`, so the `Set-Cookie` headers are parsed directly. Login clears the cookies before setting them, so the last non-empty value wins.
 3. Subsequent calls to `GET /api/v1/students/:id` send the JWT cookies plus the matching `x-csrf-token` header.
-4. The session is cached in memory. If the backend answers 401, 403 or 400 (an expired token fails CSRF validation first), the service logs in again once and retries.
+4. The session is cached in memory. If the backend answers 401 (expired access token), 403 (CSRF mismatch) or 400 (missing CSRF header), the service logs in again once and retries.
 
 ## Test
 
 The seed creates two students, ids `2` (Ada Lovelace) and `3` (Alan Turing).
 
 ```bash
-curl -OJ http://localhost:8080/api/v1/students/2/report && file student-2-report.pdf
+curl -f -o student-2-report.pdf http://localhost:8080/api/v1/students/2/report && file student-2-report.pdf
 ```
 
-Expected: `student-2-report.pdf: PDF document`.
+Expected: `student-2-report.pdf: PDF document`. Use `pdftotext student-2-report.pdf -` to check the contents.
 
 Error cases:
 
