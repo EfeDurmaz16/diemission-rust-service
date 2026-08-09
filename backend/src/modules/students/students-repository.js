@@ -1,11 +1,7 @@
 const { processDBRequest } = require("../../utils");
 
-const getRoleId = async (roleName) => {
-    const query = "SELECT id FROM roles WHERE name ILIKE $1";
-    const queryParams = [roleName];
-    const { rows } = await processDBRequest({ query, queryParams });
-    return rows[0].id;
-}
+/** Match the seeded role by name instead of hardcoding a role id. */
+const STUDENT_ROLE_NAME = "Student";
 
 const findAllStudents = async (payload) => {
     const { name, className, section, roll } = payload;
@@ -17,9 +13,10 @@ const findAllStudents = async (payload) => {
             t1.last_login AS "lastLogin",
             t1.is_active AS "systemAccess"
         FROM users t1
+        INNER JOIN roles role ON role.id = t1.role_id AND role.name ILIKE $1
         LEFT JOIN user_profiles t3 ON t1.id = t3.user_id
-        WHERE t1.role_id = 3`;
-    let queryParams = [];
+        WHERE 1=1`;
+    let queryParams = [STUDENT_ROLE_NAME];
     if (name) {
         query += ` AND t1.name = $${queryParams.length + 1}`;
         queryParams.push(name);
@@ -37,18 +34,18 @@ const findAllStudents = async (payload) => {
         queryParams.push(roll);
     }
 
-    query += ' ORDER BY t1.id';
+    query += " ORDER BY t1.id";
 
     const { rows } = await processDBRequest({ query, queryParams });
     return rows;
-}
+};
 
 const addOrUpdateStudent = async (payload) => {
     const query = "SELECT * FROM student_add_update($1)";
     const queryParams = [payload];
     const { rows } = await processDBRequest({ query, queryParams });
     return rows[0];
-}
+};
 
 const findStudentDetail = async (id) => {
     const query = `
@@ -59,7 +56,9 @@ const findStudentDetail = async (id) => {
             u.is_active AS "systemAccess",
             p.phone,
             p.gender,
-            p.dob,
+            -- Cast the date columns to text so they stay calendar dates instead
+            -- of being shifted into UTC timestamps by the driver.
+            p.dob::text AS dob,
             p.class_name AS "class",
             p.section_name AS "section",
             p.roll,
@@ -72,50 +71,39 @@ const findStudentDetail = async (id) => {
             p.relation_of_guardian as "relationOfGuardian",
             p.current_address AS "currentAddress",
             p.permanent_address AS "permanentAddress",
-            p.admission_dt AS "admissionDate",
-            r.name as "reporterName"
+            p.admission_dt::text AS "admissionDate",
+            reporter.name as "reporterName"
         FROM users u
+        INNER JOIN roles role ON role.id = u.role_id AND role.name ILIKE $2
         LEFT JOIN user_profiles p ON u.id = p.user_id
-        LEFT JOIN users r ON u.reporter_id = r.id
+        LEFT JOIN users reporter ON u.reporter_id = reporter.id
         WHERE u.id = $1`;
-    const queryParams = [id];
+    const queryParams = [id, STUDENT_ROLE_NAME];
     const { rows } = await processDBRequest({ query, queryParams });
     return rows[0];
-}
+};
 
 const findStudentToSetStatus = async ({ userId, reviewerId, status }) => {
     const now = new Date();
     const query = `
-        UPDATE users
+        UPDATE users u
         SET
             is_active = $1,
             status_last_reviewed_dt = $2,
             status_last_reviewer_id = $3
-        WHERE id = $4
+        FROM roles role
+        WHERE u.id = $4
+          AND role.id = u.role_id
+          AND role.name ILIKE $5
     `;
-    const queryParams = [status, now, reviewerId, userId];
+    const queryParams = [status, now, reviewerId, userId, STUDENT_ROLE_NAME];
     const { rowCount } = await processDBRequest({ query, queryParams });
-    return rowCount
-}
-
-const findStudentToUpdate = async (paylaod) => {
-    const { basicDetails: { name, email }, id } = paylaod;
-    const currentDate = new Date();
-    const query = `
-        UPDATE users
-        SET name = $1, email = $2, updated_dt = $3
-        WHERE id = $4;
-    `;
-    const queryParams = [name, email, currentDate, id];
-    const { rows } = await processDBRequest({ query, queryParams });
-    return rows;
-}
+    return rowCount;
+};
 
 module.exports = {
-    getRoleId,
     findAllStudents,
     addOrUpdateStudent,
     findStudentDetail,
     findStudentToSetStatus,
-    findStudentToUpdate
 };

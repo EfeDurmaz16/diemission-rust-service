@@ -1,11 +1,12 @@
 const express = require("express");
 const router = express.Router();
+const { checkApiAccess } = require("../../middlewares");
 const studentController = require("./students-controller");
 
-router.get("", studentController.handleGetAllStudents);
-router.post("", studentController.handleAddStudent);
-router.get("/:id", studentController.handleGetStudentDetail);
-router.post("/:id/status", studentController.handleStudentStatus);
-router.put("/:id", studentController.handleUpdateStudent);
+router.get("", checkApiAccess, studentController.handleGetAllStudents);
+router.post("", checkApiAccess, studentController.handleAddStudent);
+router.get("/:id", checkApiAccess, studentController.handleGetStudentDetail);
+router.post("/:id/status", checkApiAccess, studentController.handleStudentStatus);
+router.put("/:id", checkApiAccess, studentController.handleUpdateStudent);
 
 module.exports = { studentsRoutes: router };
