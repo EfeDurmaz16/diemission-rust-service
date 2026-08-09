@@ -167,3 +167,31 @@ INSERT INTO user_profiles
 (user_id, gender, marital_status, phone,dob,join_dt,qualification,experience,current_address,permanent_address,father_name,mother_name,emergency_phone)
 VALUES
 ((SELECT currval('users_id_seq')),'Male','Married','4759746607','2024-08-05',NULL,NULL,NULL,NULL,NULL,'stut','lancy','79374304');
+
+-- Sample students, so the student endpoints and the PDF report can be tried
+-- on a fresh database. They reuse the demo password of the admin account.
+INSERT INTO classes (name, sections) VALUES ('Grade 10','A,B')
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO sections (name) VALUES ('A'), ('B')
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO users(name,email,role_id,created_dt,password,is_active,is_email_verified,reporter_id)
+VALUES('Ada Lovelace','ada.lovelace@school.com',(SELECT id FROM roles WHERE name = 'Student'), now(),'$argon2id$v=19$m=65536,t=3,p=4$21a+bDbESEI60WO1wRKnvQ$i6OrxqNiHvwtf1Xg3bfU5+AXZG14fegW3p+RSMvq1oU', true, true,(SELECT id FROM users WHERE email = 'admin@school-admin.com'))
+ON CONFLICT (email) DO NOTHING;
+
+INSERT INTO user_profiles
+(user_id,gender,phone,dob,class_name,section_name,roll,admission_dt,father_name,father_phone,mother_name,mother_phone,guardian_name,guardian_phone,relation_of_guardian,current_address,permanent_address)
+VALUES
+((SELECT id FROM users WHERE email = 'ada.lovelace@school.com'),'Female','5551002001','2008-12-10','Grade 10','A',1,'2024-09-01','Lord Byron','5551002002','Anne Byron','5551002003','Lord Byron','5551002002','Father','42 Analytical Engine St','42 Analytical Engine St')
+ON CONFLICT (user_id) DO NOTHING;
+
+INSERT INTO users(name,email,role_id,created_dt,password,is_active,is_email_verified,reporter_id)
+VALUES('Alan Turing','alan.turing@school.com',(SELECT id FROM roles WHERE name = 'Student'), now(),'$argon2id$v=19$m=65536,t=3,p=4$21a+bDbESEI60WO1wRKnvQ$i6OrxqNiHvwtf1Xg3bfU5+AXZG14fegW3p+RSMvq1oU', true, true,(SELECT id FROM users WHERE email = 'admin@school-admin.com'))
+ON CONFLICT (email) DO NOTHING;
+
+INSERT INTO user_profiles
+(user_id,gender,phone,dob,class_name,section_name,roll,admission_dt,father_name,father_phone,mother_name,mother_phone,guardian_name,guardian_phone,relation_of_guardian,current_address,permanent_address)
+VALUES
+((SELECT id FROM users WHERE email = 'alan.turing@school.com'),'Male','5551003001','1912-06-23','Grade 10','B',2,'2024-09-01','Julius Turing','5551003002','Ethel Turing','5551003003','Julius Turing','5551003002','Father','5 Bletchley Park Rd','5 Bletchley Park Rd')
+ON CONFLICT (user_id) DO NOTHING;
